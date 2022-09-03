@@ -39,7 +39,7 @@ if confirm "Are you sure to install the program ?"; then
     sudo apt update
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9165938D90FDDD2E
     sudo apt update
-    sudo apt install bluez-tools bluez-alsa-utils
+    sudo apt install bluez-tools bluez-alsa-utils -y
     sudo rm /etc/asound.conf
     sudo echo -e "defaults.pcm.card 1\ndefaults.ctl.card 1" > /etc/asound.conf
     macad=0
