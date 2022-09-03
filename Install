@@ -52,6 +52,12 @@ if confirm "Are you sure to install the program ?"; then
     cd /etc/bluetooth/
     sudo wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/main.conf
     cd  ~/
+    echo "Define bluetooth name :"
+    read bluetoothname
+    sudo echo -e "PRETTY_HOSTNAME=$bluetoothname" > /etc/machine-info
+    sudo systemctl enable bluetooth
+    sudo systemctl start bluetooth
+    
     cd /home/pi
 else
     echo "The operation was canceled by the user."
