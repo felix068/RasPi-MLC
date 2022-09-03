@@ -68,8 +68,8 @@ if confirm "Are you sure to install the program ?"; then
     sudo wget ""https://raw.githubusercontent.com/felix068/WP_Kiosk_Raspi/main/Preset/5inch%20HDMI%20LCD%20V2%20-800X480%20XPT2046/98-dietpi-disable_dpms.conf""
     echo -e "\033[31m The program setting your screen resolution and chromium argument \033[0m"
     cd  ~/
-    
-    
+    sudo apt update
+    sudo apt full-upgrade
     cd /home/pi
     echo -e "\033[31m The operation was done ! \033[0m"
 else
