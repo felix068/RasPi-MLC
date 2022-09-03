@@ -57,6 +57,14 @@ if confirm "Are you sure to install the program ?"; then
     sudo echo -e "PRETTY_HOSTNAME=$bluetoothname" > /etc/machine-info
     sudo systemctl enable bluetooth
     sudo systemctl start bluetooth
+    cd /etc/systemd/system/
+    sudo wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/bt-agent.service
+    cd  ~/
+    sudo systemctl enable bt-agent
+    sudo systemctl start bt-agent
+    sudo rm /etc/default/bluez-alsa
+    sudo echo -e 'OPTIONS="--profile=a2dp-sink"' > /etc/default/bluez-alsa
+    
     
     cd /home/pi
 else
