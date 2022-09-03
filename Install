@@ -33,7 +33,6 @@ if confirm "Are you sure to install the program ?"; then
     cd /etc/X11/xorg.conf.d/
     sudo wget ""https://raw.githubusercontent.com/felix068/WP_Kiosk_Raspi/main/Preset/5inch%20HDMI%20LCD%20V2%20-800X480%20XPT2046/98-dietpi-disable_dpms.conf""
     echo -e "\033[31m The program setting your screen resolution and chromium argument \033[0m"
-                                                                                                                                                                            echo -e "\033[31m The operation was done ! \033[0m"
     cd  ~/
     sudo echo "deb http://archive.raspbian.org/raspbian/ bookworm main" | sudo tee /etc/apt/sources.list.d/armbian.list
     sudo printf 'Package: *\nPin: release n=bookworm\nPin-Priority: 100\n' | sudo tee --append /etc/apt/preferences.d/limit-bookw
@@ -64,9 +63,13 @@ if confirm "Are you sure to install the program ?"; then
     sudo systemctl start bt-agent
     sudo rm /etc/default/bluez-alsa
     sudo echo -e 'OPTIONS="--profile=a2dp-sink"' > /etc/default/bluez-alsa
-    
-    
+    cd /etc/systemd/system/
+    sudo wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/aplay.service
+    cd  ~/
+    sudo systemctl enable aplay
+    sudo systemctl start aplay
     cd /home/pi
+    echo -e "\033[31m The operation was done ! \033[0m"
 else
     echo "The operation was canceled by the user."
 fi
