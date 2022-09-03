@@ -1,0 +1,11 @@
+[Unit]
+Description=Bluetooth Auth Agent
+After=bluetooth.service
+PartOf=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c '/usr/bin/yes | /usr/bin/bt-agent -c DisplayOnly'
+
+[Install]
+WantedBy=bluetooth.target
