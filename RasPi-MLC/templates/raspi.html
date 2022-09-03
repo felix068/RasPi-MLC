@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=800, height=480, initial-scale=1" />
+        <title></title>
+
+        <link rel="stylesheet" type="text/css" href="/assets/style.css" />
+
+        <style type="text/css">
+            body {
+                background: url("/assets/images/RPIfond.jpeg");
+                padding-top: 40px;
+            }
+
+            #content > div:nth-child(2) {
+                height: 176px;
+                margin-top: 10px;
+            }
+
+            #content > div:nth-child(3) {
+                margin-top: 10px;
+                justify-content: center;
+            }
+
+            #content > div:nth-child(3) > p {
+                user-select: none;
+                margin: 0;
+                padding: 5px;
+                width: 80.85px;
+                font-size: 23px;
+            }
+
+            #content > div:nth-child(3) > p.big {
+                width: 119.03px;
+            }
+
+            #progressbar {
+                width: 65vw;
+                height: 30px;
+            }
+
+            #progressbarIndicator {
+                height: 50px;
+                width: 50px;
+                top: -10px;
+                transform: translate(-25px);
+            }
+
+            #playingImg {
+                width: 130px;
+                height: 130px;
+                margin-left: 100px;
+            }
+
+            #playingName {
+                max-width: 100%;
+            }
+
+            #vol {
+                margin-left: 28px;
+                margin-right: 28px;
+            }
+
+            #playing {
+                width: 350px;
+                margin-top: -60px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        </style>
+
+        <script type="module">
+            import { io } from "/assets/socket.io.esm.min.js";
+            window.io = io;
+        </script>
+
+        <script type="text/javascript">
+            var volumeTimeout;
+            var volumeInterval;
+
+            const status = {
+                stopped: 0,
+                playing: 1,
+                paused: 2,
+            };
+
+            var currentStatus;
+            var currentDuration;
+            var currentDurationDone;
+            var isPositionMoved = false;
+
+            function updateVolume(vol) {
+                volume.innerText = vol + "%";
+            }
+
+            async function addVolume(add) {
+                websocket.emit("volume_add", add);
+            }
+
+            function resetTimers() {
+                if (volumeTimeout) {
+                    clearTimeout(volumeTimeout);
+                    volumeTimeout = undefined;
+                }
+                if (volumeInterval) {
+                    clearInterval(volumeInterval);
+                    volumeInterval = undefined;
+                }
+            }
+
+            function setShownPosition(pos) {
+                progressbarDone.style.width = pos * 100 + "%";
+                progressbarIndicator.style.left = pos * 100 + "%";
+                let [time, isLong] = formatTime(Math.floor(pos * currentDuration));
+                durationDone.innerText = time;
+                if (isLong) {
+                    durationDone.classList.add("big");
+                } else {
+                    durationDone.classList.remove("big");
+                }
+                [time, isLong] = formatTime(currentDuration);
+                duration.innerText = time;
+                if (isLong) {
+                    duration.classList.add("big");
+                } else {
+                    duration.classList.remove("big");
+                }
+            }
+
+            function zfill(s, c) {
+                while (s.length < c) {
+                    s = "0" + s;
+                }
+                return s;
+            }
+
+            function divmod(x, y) {
+                let div = Math.floor(x / y);
+                let mod = x % y;
+                return [div, mod];
+            }
+
+            function formatTime(seconds) {
+                let hours, minutes;
+                [hours, seconds] = divmod(seconds, 3600);
+                [minutes, seconds] = divmod(seconds, 60);
+                let formated = "";
+                let isLong = false;
+                if (hours != 0) {
+                    formated += zfill(hours.toString(), 2) + ":";
+                    isLong = true;
+                }
+                return [formated + zfill(minutes.toString(), 2) + ":" + zfill(seconds.toString(), 2), isLong];
+            }
+
+            function calculatePercentageFromMouseX(mouseX) {
+                let progressbarBounds = progressbar.getBoundingClientRect();
+                let minX = progressbarBounds.x;
+                let width = progressbarBounds.width;
+                let percentage;
+                if (mouseX < minX) {
+                    percentage = 0;
+                } else if (mouseX > minX + width) {
+                    percentage = 1;
+                } else {
+                    percentage = (mouseX - minX) / width;
+                }
+                return percentage;
+            }
+
+            window.addEventListener("load", async () => {
+                websocket = io("/websocket");
+
+                websocket.on("connect", () => {
+                    websocket.emit("raspi");
+                });
+
+                websocket.on("volume_set", (msg, cb) => {
+                    updateVolume(msg);
+                    if (cb) {
+                        cb();
+                    }
+                });
+
+                websocket.on("refreshpi", (msg, cb) => {
+                    location.reload();
+                    if (cb) {
+                        cb();
+                    }
+                });
+                websocket.on("status", async (msg, cb) => {
+                    currentStatus = msg.status;
+                    if (currentStatus == status.stopped) {
+                        playPauseBtn.title = "Démarrer la lecture";
+                        playPauseImg.src = "/assets/images/play_btn.svg";
+                    } else if (currentStatus == status.playing) {
+                        playPauseBtn.title = "Mettre en pause la lecture";
+                        playPauseImg.src = "/assets/images/pause_btn.svg";
+                    } else if (currentStatus == status.paused) {
+                        playPauseBtn.title = "Reprendre la lecture";
+                        playPauseImg.src = "/assets/images/play_btn.svg";
+                    }
+
+                    let playing = msg.playing;
+                    if (playing) {
+                        playingName.innerText = playing;
+                        let req = await fetch("/api/music/image?music=" + playing, {
+                            method: "HEAD",
+                        });
+                        if (req.status == 404) {
+                            playingImg.src = "/assets/images/music_default.svg";
+                        } else {
+                            playingImg.src = `/api/music/image?music=${playing}`;
+                        }
+                    } else {
+                        playingImg.src = "";
+                        playingName.innerText = "";
+                    }
+
+                    if (cb) {
+                        cb();
+                    }
+                });
+
+                websocket.on("position_set", (msg, cb) => {
+                    currentDuration = msg.duration;
+                    if (!isPositionMoved) {
+                        setShownPosition(msg.position);
+                    }
+
+                    if (cb) {
+                        cb();
+                    }
+                });
+
+                playPauseBtn.addEventListener("click", () => {
+                    if (currentStatus == status.stopped) {
+                        websocket.emit("play", null);
+                    } else if (currentStatus == status.playing || currentStatus == status.paused) {
+                        websocket.emit("pause");
+                    }
+                });
+                stopBtn.addEventListener("click", () => websocket.emit("stop"));
+
+                volp.addEventListener("mousedown", async (e) => {
+                    addVolume(1);
+                    volumeTimeout = setTimeout(() => {
+                        volumeInterval = setInterval(() => {
+                            addVolume(1);
+                        }, 75);
+                    }, 210);
+                });
+                volm.addEventListener("mousedown", async (e) => {
+                    addVolume(-1);
+                    volumeTimeout = setTimeout(() => {
+                        volumeInterval = setInterval(() => {
+                            addVolume(-1);
+                        }, 75);
+                    }, 210);
+                });
+
+                volp.addEventListener("click", (e) => {
+                    if (e.srcElement.dblclick_timeout == undefined) {
+                        e.srcElement.dblclick_timeout = setTimeout(() => {
+                            delete e.srcElement.dblclick_timeout;
+                        }, 220);
+                    } else {
+                        addVolume(-2);
+                        websocket.emit("change_song", 1);
+                    }
+                });
+                volm.addEventListener("click", (e) => {
+                    if (e.srcElement.dblclick_timeout == undefined) {
+                        e.srcElement.dblclick_timeout = setTimeout(() => {
+                            delete e.srcElement.dblclick_timeout;
+                        }, 220);
+                    } else {
+                        addVolume(2);
+                        websocket.emit("change_song", -1);
+                    }
+                });
+
+                window.addEventListener("mouseup", (e) => {
+                    resetTimers();
+                    if (isPositionMoved) {
+                        websocket.emit("position_set", currentDurationDone);
+                        isPositionMoved = false;
+                    }
+                });
+
+                progressbarIndicator.addEventListener("mousedown", (e) => {
+                    isPositionMoved = true;
+                });
+
+                window.addEventListener("mousemove", (e) => {
+                    if (isPositionMoved) {
+                        let percentage = calculatePercentageFromMouseX(e.clientX);
+                        if (e.buttons == 1) {
+                            currentDurationDone = percentage;
+                            setShownPosition(percentage);
+                        }
+                    }
+                });
+
+                progressbar.addEventListener("click", (e) => {
+                    websocket.emit("position_set", calculatePercentageFromMouseX(e.clientX));
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <div id="content">
+            <div>
+                <div id="volp" class="button">
+                    <img src="/assets/images/vol+.svg" class="unselectable" />
+                </div>
+                <p id="vol" align="center" class="unselectable darkbg">Volume: <span id="volume">--%</span></p>
+                <div id="volm" class="button">
+                    <img src="/assets/images/vol-.svg" class="unselectable" />
+                </div>
+            </div>
+            <div>
+                <div id="playPauseBtn" class="button">
+                    <img id="playPauseImg" class="unselectable" />
+                </div>
+                <div id="playing">
+                    <img id="playingImg" class="unselectable" />
+                    <p id="playingName" class="darkbg unselectable" align="center"></p>
+                </div>
+                <div id="stopBtn" class="button">
+                    <img src="/assets/images/stop_btn.svg" class="unselectable" />
+                </div>
+            </div>
+            <div>
+                <p id="durationDone" class="darkbg" align="center">--:--</p>
+                <div id="progressbar">
+                    <div style="width: 0" id="progressbarDone"></div>
+                    <div style="left: 0" id="progressbarIndicator"></div>
+                </div>
+                <p id="duration" class="darkbg" align="center">--:--</p>
+            </div>
+        </div>
+    </body>
+</html>

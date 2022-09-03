@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>RasPi-MLC</title>
+
+        <link rel="stylesheet" type="text/css" href="/assets/style.css" />
+        <link rel="stylesheet" type="text/css" href="/assets/loading/style.css" />
+
+        <style type="text/css">
+            body {
+                background: url("/assets/images/background-pc.jpeg") center / cover;
+            }
+
+            .button:hover {
+                filter: brightness(85%);
+            }
+
+            .musicButton {
+                opacity: 80%;
+                position: relative;
+            }
+
+            .musicButton > img {
+                height: 100px;
+            }
+
+            .musicButton.disabled > img {
+                filter: grayscale();
+            }
+
+            .musicButton.activated > img {
+                filter: brightness(120%);
+            }
+
+            #content > div {
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }
+
+            #content > div:nth-child(1),
+            #content > div:nth-child(2) {
+                justify-content: center;
+            }
+
+            #content > div:nth-child(3) {
+            }
+
+            #content > div:nth-child(2) > p {
+                user-select: none;
+                margin: 0;
+                padding: 5px;
+                width: 49.3px;
+            }
+
+            #content > div:nth-child(2) > p.big {
+                width: 75.86px;
+            }
+
+            .musicLoading {
+                position: absolute;
+                left: 80px;
+                top: 30px;
+                pointer-events: none;
+            }
+
+            .musicLoading > div {
+                background-color: #55a8ba;
+            }
+
+            #musicExplorer {
+                margin-left: 10px;
+                margin-right: 10px;
+                border-color: #55a8ba;
+                border-style: solid;
+                border-width: 3px;
+                border-radius: 10px;
+                width: 500px;
+                height: 300px;
+                background-color: #c9eae2;
+                opacity: 80%;
+                overflow-y: auto;
+            }
+
+            .musicElement {
+                margin-top: 7px;
+                margin-bottom: 7px;
+                width: 100%;
+                height: 40px;
+                display: flex;
+                flex-direction: row;
+            }
+
+            .musicElement.selected {
+                background-color: white;
+            }
+
+            .musicElement > img {
+                user-select: none;
+                margin-left: 10px;
+            }
+
+            .musicElement > p {
+                user-select: none;
+                margin-left: 10px;
+                width: 440px;
+                align-self: center;
+            }
+
+            #playingImg {
+                width: 200px;
+                height: 200px;
+                margin-left: 100px;
+            }
+
+            #playingName {
+                max-width: 100%;
+            }
+
+            #playing {
+                width: 400px;
+                margin-top: -50px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            #header {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                height: 100px;
+                border-radius: 0;
+                background-color: rgba(0, 0, 0, 0.4);
+            }
+
+            #refresh {
+                height: 100px;
+                width: 100px;
+            }
+
+            #vol {
+                margin-left: 53px;
+                margin-right: 53px;
+            }
+        </style>
+
+        <script type="module">
+            import { io } from "/assets/socket.io.esm.min.js";
+            window.io = io;
+        </script>
+
+        <script type="text/javascript">
+            var volumeTimeout;
+            var volumeInterval;
+
+            const status = {
+                stopped: 0,
+                playing: 1,
+                paused: 2,
+            };
+
+            var currentStatus;
+            var currentDuration;
+            var currentDurationDone;
+            var currentMusics = {};
+            var isPositionMoved = false;
+            var currentFlags = {};
+
+            function updateVolume(vol) {
+                volume.innerText = vol + "%";
+            }
+
+            function addVolume(add) {
+                websocket.emit("volume_add", add);
+            }
+
+            function findCssRule(stylesheet, selector) {
+                for (let rule of document.styleSheets[stylesheet].cssRules) {
+                    if (rule.selectorText == selector) {
+                        return rule;
+                    }
+                }
+            }
+
+            function setShownPosition(pos) {
+                progressbarDone.style.width = pos * 100 + "%";
+                progressbarIndicator.style.left = pos * 100 + "%";
+                let [time, isLong] = formatTime(Math.floor(pos * currentDuration));
+                durationDone.innerText = time;
+                if (isLong) {
+                    durationDone.classList.add("big");
+                } else {
+                    durationDone.classList.remove("big");
+                }
+                [time, isLong] = formatTime(currentDuration);
+                duration.innerText = time;
+                if (isLong) {
+                    duration.classList.add("big");
+                } else {
+                    duration.classList.remove("big");
+                }
+            }
+
+            function uploadFile(accept, url, startUploadCB, endUploadCB) {
+                let form = document.createElement("form");
+                form.enctype = "multipart/formdata";
+                form.method = "POST";
+                form.action = url;
+                form.style.display = "none";
+                let fileSelector = document.createElement("input");
+                fileSelector.type = "file";
+                fileSelector.name = "file";
+                fileSelector.accept = accept;
+
+                form.appendChild(fileSelector);
+                fileSelector.click();
+                fileSelector.addEventListener("change", async (e) => {
+                    if (startUploadCB) {
+                        startUploadCB();
+                    }
+                    let formdata = new FormData(form);
+                    let req = await fetch(form.action, {
+                        body: formdata,
+                        headers: formdata.headers,
+                        method: form.method,
+                    });
+                    if (endUploadCB) {
+                        endUploadCB();
+                    }
+                });
+            }
+
+            function zfill(s, c) {
+                while (s.length < c) {
+                    s = "0" + s;
+                }
+                return s;
+            }
+
+            function divmod(x, y) {
+                let div = Math.floor(x / y);
+                let mod = x % y;
+                return [div, mod];
+            }
+
+            function formatTime(seconds) {
+                let hours, minutes;
+                [hours, seconds] = divmod(seconds, 3600);
+                [minutes, seconds] = divmod(seconds, 60);
+                let formated = "";
+                let isLong = false;
+                if (hours != 0) {
+                    formated += zfill(hours.toString(), 2) + ":";
+                    isLong = true;
+                }
+                return [formated + zfill(minutes.toString(), 2) + ":" + zfill(seconds.toString(), 2), isLong];
+            }
+
+            function resetTimers() {
+                if (volumeTimeout) {
+                    clearTimeout(volumeTimeout);
+                    volumeTimeout = undefined;
+                }
+                if (volumeInterval) {
+                    clearInterval(volumeInterval);
+                    volumeInterval = undefined;
+                }
+            }
+
+            function playMusic(name) {
+                websocket.emit("play", name);
+            }
+
+            function addMusicToList(music) {
+                let musicElement, image, name;
+                if (currentMusics[music.name] == undefined) {
+                    musicElement = document.createElement("div");
+                    musicElement.classList.add("musicElement");
+                    image = document.createElement("img");
+                    musicElement.appendChild(image);
+                    name = document.createElement("p");
+                    name.innerText = music.name;
+                    musicElement.appendChild(name);
+                    musicExplorer.appendChild(musicElement);
+                    currentMusics[music.name] = {
+                        htmlElement: musicElement,
+                        image: music.image,
+                    };
+
+                    musicElement.addEventListener("click", (e) => {
+                        for (let elem of document.querySelectorAll(".musicElement.selected")) {
+                            elem.classList.remove("selected");
+                        }
+                        musicElement.classList.add("selected");
+                        changeImageBtn.classList.remove("disabled");
+                        deleteMusicBtn.classList.remove("disabled");
+                        if (currentMusics[music.name].image == null) {
+                            changeImageBtn.querySelector("img").src = "/assets/images/change_image_btn.png";
+                        } else {
+                            changeImageBtn.querySelector("img").src = "/assets/images/delete_image_btn.png";
+                        }
+                    });
+
+                    musicElement.addEventListener("dblclick", (e) => {
+                        playMusic(music.name);
+                    });
+                } else {
+                    musicElement = currentMusics[music.name].htmlElement;
+                    currentMusics[music.name].image = music.image;
+                    image = musicElement.querySelector("img");
+                    name = musicElement.querySelector("p");
+                }
+
+                if (music.image == null) {
+                    image.src = "/assets/images/music_default.svg";
+                } else {
+                    image.src = `/api/music/image?file=${music.image}`;
+                }
+            }
+
+            function calculatePercentageFromMouseX(mouseX) {
+                let progressbarBounds = progressbar.getBoundingClientRect();
+                let minX = progressbarBounds.x;
+                let width = progressbarBounds.width;
+                let percentage;
+                if (mouseX < minX) {
+                    percentage = 0;
+                } else if (mouseX > minX + width) {
+                    percentage = 1;
+                } else {
+                    percentage = (mouseX - minX) / width;
+                }
+                return percentage;
+            }
+
+            window.addEventListener("load", async () => {
+                websocket = io("/websocket");
+
+                websocket.on("volume_set", (msg, cb) => {
+                    updateVolume(msg);
+                    if (cb) {
+                        cb();
+                    }
+                });
+                websocket.on("status", (msg, cb) => {
+                    currentStatus = msg.status;
+                    if (currentStatus == status.stopped) {
+                        playPauseBtn.title = "Démarrer la lecture";
+                        playPauseImg.src = "/assets/images/play_btn.svg";
+                    } else if (currentStatus == status.playing) {
+                        playPauseBtn.title = "Mettre en pause la lecture";
+                        playPauseImg.src = "/assets/images/pause_btn.svg";
+                    } else if (currentStatus == status.paused) {
+                        playPauseBtn.title = "Reprendre la lecture";
+                        playPauseImg.src = "/assets/images/play_btn.svg";
+                    }
+                    let playing = msg.playing;
+                    if (playing) {
+                        image = currentMusics[playing].image;
+                        if (image == null) {
+                            playingImg.src = "/assets/images/music_default.svg";
+                        } else {
+                            playingImg.src = `/api/music/image?file=${image}`;
+                        }
+                        playingName.innerText = playing;
+                    } else {
+                        playingImg.src = "";
+                        playingName.innerText = "";
+                    }
+
+                    if (cb) {
+                        cb();
+                    }
+                });
+                websocket.on("music_add", (msg, cb) => {
+                    addMusicToList(msg);
+                    if (cb) {
+                        cb();
+                    }
+                });
+                websocket.on("music_delete", (msg, cb) => {
+                    currentMusics[msg].htmlElement.remove();
+                    delete currentMusics[msg];
+                });
+                websocket.on("position_set", (msg, cb) => {
+                    currentDuration = msg.duration;
+                    currentDurationDone = msg.position;
+                    if (!isPositionMoved) {
+                        setShownPosition(msg.position);
+                    }
+
+                    if (cb) {
+                        cb();
+                    }
+                });
+                websocket.on("flags", (msg, cb) => {
+                    currentFlags = msg;
+                    if (msg.repeat_all) {
+                        repeatAllBtn.classList.add("activated");
+                        randomBtn.classList.remove("disabled");
+                    } else {
+                        repeatAllBtn.classList.remove("activated");
+                        randomBtn.classList.add("disabled");
+                    }
+                    if (msg.repeat_one) {
+                        repeatOneBtn.classList.add("activated");
+                    } else {
+                        repeatOneBtn.classList.remove("activated");
+                    }
+                    if (msg.random) {
+                        randomBtn.classList.add("activated");
+                    } else {
+                        randomBtn.classList.remove("activated");
+                    }
+                });
+
+                playPauseBtn.addEventListener("click", () => {
+                    if (currentStatus == status.stopped) {
+                        let selected = document.querySelector(".musicElement.selected");
+                        if (selected) {
+                            playMusic(selected.querySelector("p").innerText);
+                        } else {
+                            alert("Merci de sélectionner une musique");
+                        }
+                    } else if (currentStatus == status.playing || currentStatus == status.paused) {
+                        websocket.emit("pause");
+                    }
+                });
+
+                stopBtn.addEventListener("click", () => websocket.emit("stop"));
+
+                volp.addEventListener("mousedown", async (e) => {
+                    addVolume(1);
+                    volumeTimeout = setTimeout(() => {
+                        volumeInterval = setInterval(() => {
+                            addVolume(1);
+                        }, 75);
+                    }, 210);
+                });
+                volm.addEventListener("mousedown", async (e) => {
+                    addVolume(-1);
+                    volumeTimeout = setTimeout(() => {
+                        volumeInterval = setInterval(() => {
+                            addVolume(-1);
+                        }, 75);
+                    }, 210);
+                });
+                volp.addEventListener("dblclick", (e) => {
+                    addVolume(-2);
+                    websocket.emit("change_song", 1);
+                });
+                volm.addEventListener("dblclick", (e) => {
+                    addVolume(2);
+                    websocket.emit("change_song", -1);
+                });
+                refresh.addEventListener("click", () => {
+                    websocket.emit("refreshpi");
+                });
+                uploadMusicBtn.addEventListener("click", (e) => {
+                    if (!uploadMusicBtn.classList.contains("disabled")) {
+                        uploadFile(
+                            "audio/*",
+                            "/api/music",
+                            () => {
+                                uploadLoading.style.display = "";
+                                uploadMusicBtn.classList.add("disabled");
+                            },
+                            () => {
+                                uploadLoading.style.display = "none";
+                                uploadMusicBtn.classList.remove("disabled");
+                            }
+                        );
+                    }
+                });
+
+                changeImageBtn.addEventListener("click", async (e) => {
+                    if (!changeImageBtn.classList.contains("disabled")) {
+                        let selected = document.querySelector(".musicElement.selected");
+
+                        if (selected) {
+                            if (selected.querySelector("img").src.endsWith("/assets/images/music_default.svg")) {
+                                uploadFile(
+                                    "image/*",
+                                    "/api/music/image?file=" + selected.querySelector("p").innerText,
+                                    () => {
+                                        uploadImageLoading.style.display = "";
+                                        changeImageBtn.classList.add("disabled");
+                                    },
+                                    () => {
+                                        uploadImageLoading.style.display = "none";
+                                        changeImageBtn.classList.remove("disabled");
+                                        changeImageBtn.querySelector("img").src = "/assets/images/delete_image_btn.png";
+                                    }
+                                );
+                            } else {
+                                let req = await fetch("/api/music/image?file=" + selected.querySelector("p").innerText, {
+                                    method: "DELETE",
+                                });
+                                changeImageBtn.querySelector("img").src = "/assets/images/change_image_btn.png";
+                            }
+                        } else {
+                            alert("Merci de sélectionner une musique");
+                        }
+                    }
+                });
+
+                deleteMusicBtn.addEventListener("click", async (e) => {
+                    if (!changeImageBtn.classList.contains("disabled")) {
+                        let selected = document.querySelector(".musicElement.selected");
+                        if (selected) {
+                            let req = await fetch(`/api/music?file=${selected.querySelector("p").innerText}`, {
+                                method: "DELETE",
+                            });
+                            changeImageBtn.classList.add("disabled");
+                            deleteMusicBtn.classList.add("disabled");
+                        } else {
+                            alert("Merci de sélectionner une musique");
+                        }
+                    }
+                });
+
+                progressbarIndicator.addEventListener("mousedown", (e) => {
+                    isPositionMoved = true;
+                });
+
+                window.addEventListener("mouseup", (e) => {
+                    resetTimers();
+                    if (isPositionMoved) {
+                        websocket.emit("position_set", currentDurationDone);
+                        isPositionMoved = false;
+                    }
+                });
+
+                window.addEventListener("mousemove", (e) => {
+                    if (isPositionMoved) {
+                        let percentage = calculatePercentageFromMouseX(e.clientX);
+                        if (e.buttons == 1) {
+                            currentDurationDone = percentage;
+                            setShownPosition(percentage);
+                        }
+                    }
+                });
+
+                progressbar.addEventListener("click", (e) => {
+                    websocket.emit("position_set", calculatePercentageFromMouseX(e.clientX));
+                });
+
+                repeatAllBtn.addEventListener("click", (e) => {
+                    if (currentFlags.repeat_all) {
+                        websocket.emit("set_flag", { flag: "repeat_all", value: false });
+                    } else {
+                        websocket.emit("set_flag", { flag: "repeat_all", value: true });
+                    }
+                });
+
+                repeatOneBtn.addEventListener("click", (e) => {
+                    if (currentFlags.repeat_one) {
+                        websocket.emit("set_flag", { flag: "repeat_one", value: false });
+                    } else {
+                        websocket.emit("set_flag", { flag: "repeat_one", value: true });
+                    }
+                });
+
+                randomBtn.addEventListener("click", (e) => {
+                    if (currentFlags.repeat_all) {
+                        if (currentFlags.random) {
+                            websocket.emit("set_flag", { flag: "random", value: false });
+                        } else {
+                            websocket.emit("set_flag", { flag: "random", value: true });
+                        }
+                    }
+                });
+
+                let req = await fetch("/api/music", {
+                    method: "GET",
+                });
+
+                if (req.status == 200) {
+                    for (let music of await req.json()) {
+                        addMusicToList(music);
+                    }
+                }
+
+                function adaptScreen() {
+                    if (screen.width < screen.height) {
+                        refresh.style.display = "none";
+                        musicButtons.style.display = "none";
+                        musicButtons2.style.display = "none";
+                        musicExplorer.style.width = "90%";
+                        findCssRule(2, ".musicElement").style.height = "80px";
+                        let bodyStyle = findCssRule(2, "body").style;
+                        //bodyStyle.background = "";
+                        bodyStyle.overflowY = "hidden";
+                        findCssRule(0, ".button").style.height = "100px";
+                        findCssRule(0, "#vol").style.fontSize = "18px";
+                        let volStyle = findCssRule(2, "#vol").style;
+                        volStyle.marginLeft = "2px";
+                        volStyle.marginRight = "2px";
+                        findCssRule(2, "#content > div:nth-child(3)").style.marginBottom = "30px";
+                        header.style.display = "none";
+                        playingImg.style.width = "90px";
+                        playingImg.style.height = "90px";
+                        playingImg.style.marginLeft = "55px";
+                        playing.style.marginTop = "-75px";
+                    } else {
+                        refresh.style.display = "";
+                        musicButtons.style.display = "";
+                        musicButtons2.style.display = "";
+                        musicExplorer.style.width = "";
+                        findCssRule(2, ".musicElement").style.height = "40px";
+                        let bodyStyle = findCssRule(2, "body").style;
+                        //bodyStyle.background = `url("/assets/images/background-pc.jpeg") center / cover no-repeat`;
+                        bodyStyle.overflowY = "";
+                        findCssRule(0, ".button").style.height = "160px";
+                        findCssRule(0, "#vol").style.fontSize = "40px";
+                        let volStyle = findCssRule(2, "#vol").style;
+                        volStyle.marginLeft = "53px";
+                        volStyle.marginRight = "53px";
+                        findCssRule(0, "#vol").style.fontSize = "40px";
+                        findCssRule(2, "#content > div:nth-child(3)").style.marginBottom = "";
+                        header.style.display = "";
+                        playingImg.style.width = "";
+                        playingImg.style.height = "";
+                        playingImg.style.marginLeft = "";
+                        playing.style.marginTop = "";
+                    }
+                }
+                adaptScreen();
+                screen.orientation.addEventListener("change", adaptScreen);
+            });
+        </script>
+        <script src="/assets/loading/script.js"></script>
+    </head>
+
+    <body>
+        <div id="header" class="darkbg">
+            <img src="/assets/images/logo mlc.png" />
+            <div id="refresh" class="button" title="Raffraichir la page sur la raspberrypi">
+                <img src="/assets/images/refreshpi_btn.svg" class="unselectable" />
+            </div>
+        </div>
+        <div id="content">
+            <div>
+                <div id="musicButtons">
+                    <div id="uploadMusicBtn" class="musicButton">
+                        <img src="/assets/images/upload_music_btn.png" class="unselectable" />
+                        <div loading id="uploadLoading" class="musicLoading" style="display: none"></div>
+                    </div>
+                    <div id="changeImageBtn" class="musicButton disabled">
+                        <img src="/assets/images/change_image_btn.png" class="unselectable" />
+                        <div loading id="uploadImageLoading" class="musicLoading" style="display: none"></div>
+                    </div>
+                    <div id="deleteMusicBtn" class="musicButton disabled">
+                        <img src="/assets/images/delete_music_btn.png" class="unselectable" />
+                    </div>
+                </div>
+                <div id="musicExplorer"></div>
+                <div id="musicButtons2">
+                    <div id="repeatAllBtn" class="musicButton">
+                        <img src="/assets/images/repeat_all_btn.png" class="unselectable" />
+                    </div>
+                    <div id="repeatOneBtn" class="musicButton">
+                        <img src="/assets/images/repeat_one_btn.png" class="unselectable" />
+                    </div>
+                    <div id="randomBtn" class="musicButton">
+                        <img src="/assets/images/random_btn.png" class="unselectable" />
+                    </div>
+                </div>
+            </div>
+            <div>
+                <p id="durationDone" class="darkbg" align="center">--:--</p>
+                <div id="progressbar">
+                    <div style="width: 0" id="progressbarDone"></div>
+                    <div style="left: 0" id="progressbarIndicator"></div>
+                </div>
+                <p id="duration" class="darkbg" align="center">--:--</p>
+            </div>
+            <div>
+                <div id="volp" class="button" title="Augmenter le volume">
+                    <img src="/assets/images/vol+.svg" class="unselectable" />
+                </div>
+                <p id="vol" align="center" class="unselectable darkbg">Volume: <span id="volume">--%</span></p>
+                <div id="volm" class="button" title="Diminuer le volume">
+                    <img src="/assets/images/vol-.svg" class="unselectable" />
+                </div>
+            </div>
+            <div>
+                <div id="playPauseBtn" class="button">
+                    <img id="playPauseImg" class="unselectable" />
+                </div>
+                <div id="playing">
+                    <img id="playingImg" class="unselectable" />
+                    <p id="playingName" class="darkbg unselectable" align="center"></p>
+                </div>
+                <div id="stopBtn" class="button" title="Arrêter la lecture">
+                    <img src="/assets/images/stop_btn.svg" class="unselectable" />
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

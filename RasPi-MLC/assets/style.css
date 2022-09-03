@@ -1,0 +1,117 @@
+@font-face {
+    font-family: "Quicksand";
+    src: url("/assets/fonts/quicksand_bold-webfont.woff2") format("woff2"), url("/assets/fonts/quicksand_bold-webfont.woff") format("woff");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Quicksand";
+    src: url("/assets/fonts/quicksand_bold_oblique-webfont.woff2") format("woff2"), url("/assets/fonts/quicksand_bold_oblique-webfont.woff") format("woff");
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: "Quicksand";
+    src: url("/assets/fonts/quicksand_light-webfont.woff2") format("woff2"), url("/assets/fonts/quicksand_light-webfont.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Quicksand";
+    src: url("/assets/fonts/quicksand_light_oblique-webfont.woff2") format("woff2"), url("/assets/fonts/quicksand_light_oblique-webfont.woff") format("woff");
+    font-weight: normal;
+    font-style: italic;
+}
+
+html,
+body {
+    margin: 0;
+}
+
+html {
+    height: 100vh;
+    width: 100vw;
+}
+
+* {
+    font-family: Quicksand;
+    font-weight: bold;
+}
+
+#content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+#content > div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.button {
+    width: 160px;
+    height: 160px;
+    font-size: 50px;
+    transition: filter 250ms ease;
+    opacity: 80%;
+}
+
+.button:active {
+    transition: unset;
+    filter: brightness(120%) !important;
+}
+
+#vol {
+    font-size: 40px;
+    width: 274px;
+    margin: 0;
+    margin-top: 20px;
+    height: max-content;
+}
+
+.darkbg {
+    border-radius: 10px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+}
+
+.unselectable {
+    pointer-events: none;
+    user-select: none;
+}
+
+#progressbar {
+    position: relative;
+    width: 60vw;
+    height: 10px;
+    background-color: #9fd3c7;
+    border-radius: 5px;
+    margin-top: 9px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+#progressbarDone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background-color: #55a8ba;
+    border-radius: 5px;
+}
+
+#progressbarIndicator {
+    position: absolute;
+    top: -5px;
+    height: 20px;
+    width: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transform: translate(-10px);
+}
