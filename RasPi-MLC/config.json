@@ -1,1 +1,11 @@
-
+{
+  "volume": 100,
+  "status": 1,
+  "position": 0,
+  "playing": "Tobu [NCS Release].mp3",
+  "flags": {
+    "repeat_all": false,
+    "repeat_one": false,
+    "random": false
+  }
+}
