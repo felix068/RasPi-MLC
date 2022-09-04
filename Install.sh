@@ -50,6 +50,8 @@ if confirm "Are you sure to install the program ?"; then
     sudo systemctl enable aplay
     sudo systemctl start aplay
     
+    sudo apt update
+    sudo apt full-upgrade
     sudo apt-get install xserver-xorg-input-evdev xinput-calibrator xorg unclutter chromium-browser -y
     sudo cp -rf /usr/share/X11/xorg.conf.d/10-evdev.conf /usr/share/X11/xorg.conf.d/45-evdev.conf
     sudo rm /home/pi/.profile
@@ -68,9 +70,6 @@ if confirm "Are you sure to install the program ?"; then
     sudo wget ""https://raw.githubusercontent.com/felix068/WP_Kiosk_Raspi/main/Preset/5inch%20HDMI%20LCD%20V2%20-800X480%20XPT2046/98-dietpi-disable_dpms.conf""
     echo -e "\033[31m The program setting your screen resolution and chromium argument \033[0m"
     cd  ~/
-    sudo apt update
-    sudo apt full-upgrade
-    cd /home/pi
     echo -e "\033[31m The operation was done ! \033[0m"
 else
     echo "The operation was canceled by the user."
