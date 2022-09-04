@@ -50,6 +50,10 @@ if confirm "Are you sure to install the program ?"; then
     sudo systemctl enable aplay
     sudo systemctl start aplay
     
+    wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/RasPi-MLC.tar
+    tar -xvf RasPi-MLC.tar
+    rm RasPi-MLC.tar
+    
     sudo apt update
     sudo apt full-upgrade -y
     sudo apt-get install xserver-xorg-input-evdev xinput-calibrator xorg unclutter chromium-browser -y
