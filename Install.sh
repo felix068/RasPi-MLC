@@ -49,12 +49,6 @@ if confirm "Are you sure to install the program ?"; then
     cd  ~/
     sudo systemctl enable aplay
     sudo systemctl start aplay
-    
-    wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/RasPi-MLC.tar
-    tar -xvf RasPi-MLC.tar
-    rm RasPi-MLC.tar
-    wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/startserv.sh
-    
     sudo apt update
     sudo apt full-upgrade -y
     sudo apt-get install xserver-xorg-input-evdev xinput-calibrator xorg unclutter python3-pip vlc chromium-browser -y
@@ -75,6 +69,10 @@ if confirm "Are you sure to install the program ?"; then
     cd /etc/X11/xorg.conf.d/
     sudo wget ""https://raw.githubusercontent.com/felix068/WP_Kiosk_Raspi/main/Preset/5inch%20HDMI%20LCD%20V2%20-800X480%20XPT2046/98-dietpi-disable_dpms.conf""
     echo -e "\033[31m The program setting your screen resolution and chromium argument \033[0m"
+    wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/RasPi-MLC.tar
+    tar -xvf RasPi-MLC.tar
+    rm RasPi-MLC.tar
+    wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/startserv.sh
     cd  ~/
     echo -e "\033[31m The operation was done ! \033[0m"
 else
