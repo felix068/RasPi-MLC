@@ -69,7 +69,7 @@ if confirm "Are you sure to install the program ?"; then
     cd /etc/X11/xorg.conf.d/
     sudo wget ""https://raw.githubusercontent.com/felix068/WP_Kiosk_Raspi/main/Preset/5inch%20HDMI%20LCD%20V2%20-800X480%20XPT2046/98-dietpi-disable_dpms.conf""
     echo -e "\033[31m The program setting your screen resolution and chromium argument \033[0m"
-    cd  ~/
+    cd /home/pi/
     wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/RasPi-MLC.tar
     tar -xvf RasPi-MLC.tar
     rm RasPi-MLC.tar
