@@ -373,4 +373,7 @@ if __name__ == '__main__':
         set_position(config.position, False)
         player.set_position(config.position)
 
-    websocket.run(app, port=8000, host="0.0.0.0", debug=True, use_reloader=False)
+    try:
+        websocket.run(app, port=8000, host="0.0.0.0", debug=True, use_reloader=False)
+    except RuntimeError:
+        websocket.run(app, port=8000, host="0.0.0.0", debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
