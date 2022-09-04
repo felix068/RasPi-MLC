@@ -54,12 +54,11 @@ if confirm "Are you sure to install the program ?"; then
     tar -xvf RasPi-MLC.tar
     rm RasPi-MLC.tar
     wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/startserv.sh
-    sudo apt-get -y install python3-pip
-    pip install python-vlc
     
     sudo apt update
     sudo apt full-upgrade -y
-    sudo apt-get install xserver-xorg-input-evdev xinput-calibrator xorg unclutter chromium-browser -y
+    sudo apt-get install xserver-xorg-input-evdev xinput-calibrator xorg unclutter python3-pip vlc chromium-browser -y
+    pip install python-vlc
     sudo cp -rf /usr/share/X11/xorg.conf.d/10-evdev.conf /usr/share/X11/xorg.conf.d/45-evdev.conf
     sudo rm /home/pi/.profile
     sudo rm /home/pi/.xinitrc
