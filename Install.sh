@@ -59,6 +59,8 @@ if confirm "Are you sure to install the program ?"; then
     sudo apt full-upgrade -y
     sudo apt-get install xserver-xorg-input-evdev xinput-calibrator xorg unclutter python3-pip vlc chromium-browser -y
     pip install python-vlc
+    pip install Flask
+    pip install Flask-SocketIO
     sudo cp -rf /usr/share/X11/xorg.conf.d/10-evdev.conf /usr/share/X11/xorg.conf.d/45-evdev.conf
     sudo rm /home/pi/.profile
     sudo rm /home/pi/.xinitrc
