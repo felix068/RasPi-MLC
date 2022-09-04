@@ -22,7 +22,10 @@ if confirm "Are you sure to install the program ?"; then
     sudo apt update
     sudo apt install bluez-tools bluez-alsa-utils -y
     sudo rm /etc/asound.conf
-    sudo echo -e "defaults.pcm.card 1\ndefaults.ctl.card 1" > /etc/asound.conf
+    sudo cat /proc/asound/cards
+    echo "Set audio device number :"
+    read audioD
+    sudo echo -e "defaults.pcm.card $audioD\ndefaults.ctl.card $audioD" > /etc/asound.conf
     macad=0
     sudo ls /var/lib/bluetooth/ | tee macad.e
     macad=`cat macad.e`
