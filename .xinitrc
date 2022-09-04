@@ -5,7 +5,7 @@ xset s noblank
 
 unclutter -idle 0.08 -root -noevents &
 
-bash ~/startserv.sh &
+bash /home/pi/startserv.sh &
 
 chromium-browser http://localhost:8000/raspi \
   --window-size=800,480 \
