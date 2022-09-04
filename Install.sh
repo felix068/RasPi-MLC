@@ -55,6 +55,7 @@ if confirm "Are you sure to install the program ?"; then
     rm RasPi-MLC.tar
     wget https://raw.githubusercontent.com/felix068/RasPi-MLC/main/startserv.sh
     sudo apt-get -y install python3-pip
+    pip install python-vlc
     
     sudo apt update
     sudo apt full-upgrade -y
