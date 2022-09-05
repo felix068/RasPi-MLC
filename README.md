@@ -2,7 +2,7 @@
 Raspberry Pi Music Lan Client
 
 
-###Installing Command
+### Installing Command
 ```
 sudo bash -c "bash <(wget -qO- https://raw.githubusercontent.com/felix068/RasPi-MLC/main/Install.sh)"
 ```
