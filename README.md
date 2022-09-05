@@ -1,8 +1,6 @@
 # RasPi-MLC
 Raspberry Pi Music Lan Client
 
-<span style="text-decoration:underline">this</span>
-
 <u>Contributor :</u>
 
 Felix068 or TPM28 -→ Bluetooth System, Logo Designing/Web Designing, Install Script, Web viewer
