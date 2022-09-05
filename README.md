@@ -1,6 +1,12 @@
 # RasPi-MLC
 Raspberry Pi Music Lan Client
 
+> __Warning__ :
+> $\textcolor{red}{\text{This only works with 800 X 480 resolution screens !}}$
+
+
+<h3 style="color:#ff0000">Danger</h3>
+
 ## Web Interface :
 <img src="https://media.discordapp.net/attachments/1005083652977336341/1013373790463467561/unknown.png?width=1340&height=754"
      width="536"
