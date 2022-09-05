@@ -6,8 +6,8 @@ Raspberry Pi Music Lan Client
      width="536"
      height="301">
 <img src="https://cdn.discordapp.com/attachments/1005083652977336341/1013377703593906206/unknown.png"
-     width="500"
-     height="335">
+     width="550"
+     height="360">
 <img src="https://cdn.discordapp.com/attachments/1005083652977336341/1013396426555920444/unknown.png"
      width="229"
      height="484">
