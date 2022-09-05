@@ -1,7 +1,6 @@
 # RasPi-MLC
 Raspberry Pi Music Lan Client
 
-<p>You could use this element to highlight <u>speling</u> mistakes, so the writer can <u>corect</u> them.</p>
 
 <u>Contributor :</u>
 
