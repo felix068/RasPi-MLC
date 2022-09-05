@@ -21,6 +21,7 @@ Raspberry Pi Music Lan Client
      height="484">
 
 ### <ins>Installing Command :</ins>
+
 > __Note__ : 
 >> $\textcolor{blue}{\text{Response to 'Set audio device number' must be a number}}$
 ```
