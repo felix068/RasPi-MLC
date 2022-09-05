@@ -2,7 +2,7 @@
 Raspberry Pi Music Lan Client
 
 
-<u>Contributor :<u>
+<u>Contributor :</u>
 
 Felix068 or TPM28 -→ Bluetooth System, Logo Designing/Web Designing, Install Script, Web viewer
 Kevin_OVI -→ Html/Css, Python, Java script (Web Interface, Server Programmation)
