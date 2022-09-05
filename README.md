@@ -8,7 +8,7 @@ Raspberry Pi Music Lan Client
 <img src="https://cdn.discordapp.com/attachments/1005083652977336341/1013377703593906206/unknown.png"
      width="500"
      height="335">
-<img src="https://cdn.discordapp.com/attachments/1005083652977336341/1013377703593906206/unknown.png">
+<img src="https://cdn.discordapp.com/attachments/1005083652977336341/1013396426555920444/unknown.png">
 
 ### <ins>Installing Command :</ins>
 Warning ! : Response to 'Set audio device number' must be a number
