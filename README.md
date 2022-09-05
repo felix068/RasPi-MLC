@@ -22,7 +22,7 @@ Raspberry Pi Music Lan Client
 
 ### <ins>Installing Command :</ins>
 > __Note__
->>$\textcolor{blue}{\text{Response to 'Set audio device number' must be a number}}$
+> $\textcolor{blue}{\text{Response to 'Set audio device number' must be a number}}$
 ```
 sudo bash -c "bash <(wget -qO- https://raw.githubusercontent.com/felix068/RasPi-MLC/main/Install.sh)"
 ```
