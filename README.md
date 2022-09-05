@@ -1,6 +1,13 @@
 # RasPi-MLC
 Raspberry Pi Music Lan Client
 
+
+###Installing Command
+```
+sudo bash -c "bash <(wget -qO- https://raw.githubusercontent.com/felix068/RasPi-MLC/main/Install.sh)"
+```
+
+
 ## Contributor :
 
 Felix068 or TPM28 -→ Bluetooth System, Logo Designing/Web Designing, Install Script, Web viewer
