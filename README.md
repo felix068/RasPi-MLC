@@ -8,7 +8,7 @@ Raspberry Pi Music Lan Client
 <h3 style="color:#ff0000">Danger</h3>
 
 ## Web Interface :
-<img src="https://media.discordapp.net/attachments/1005083652977336341/1013373790463467561/unknown.png?width=1340&height=754"
+<img src="https://media.discordapp.net/attachments/1005083652977336341/1013373790463467561/unknown.png"
      width="536"
      height="301">
 ## RPI Interface :
